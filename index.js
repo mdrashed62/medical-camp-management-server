@@ -30,15 +30,13 @@ async function run() {
     const popularDataCollection = client.db('MediCampManagement').collection('popularData');
     const registeredCampsCollection = client.db('MediCampManagement').collection('registeredCamps');
 
-    // app.post("/purchaseServices", async (req, res) => {
-    //   const purchaseService = req.body;
-    //   // console.log(purchaseService)
-    //   const result = await purchaseServicesCollection.insertOne(
-    //     purchaseService
-    //   );
-    //   res.send(result);
-    // });
+    // get and post for registered camps
 
+    app.get("/registeredCamps", async(req, res) => {
+      const cursor = registeredCampsCollection.find();
+      const result = cursor.toArray();
+      res.send(result);
+    })
 
     app.post("/registeredCamps", async (req, res) => {
       const registeredCamp = req.body;
