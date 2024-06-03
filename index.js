@@ -28,6 +28,9 @@ async function run() {
     // await client.connect();
 
     const popularDataCollection = client.db('MediCampManagement').collection('popularData');
+    const registeredCampsCollection = client.db('MediCampManagement').collection('registeredCamps');
+
+    // app.post()
 
     app.get("/popularData", async (req, res) => {
         const cursor = popularDataCollection.find();
