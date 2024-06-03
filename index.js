@@ -30,7 +30,21 @@ async function run() {
     const popularDataCollection = client.db('MediCampManagement').collection('popularData');
     const registeredCampsCollection = client.db('MediCampManagement').collection('registeredCamps');
 
-    // app.post()
+    // app.post("/purchaseServices", async (req, res) => {
+    //   const purchaseService = req.body;
+    //   // console.log(purchaseService)
+    //   const result = await purchaseServicesCollection.insertOne(
+    //     purchaseService
+    //   );
+    //   res.send(result);
+    // });
+
+
+    app.post("/registeredCamps", async (req, res) => {
+      const registeredCamp = req.body;
+      const result = await registeredCampsCollection.insertOne(registeredCamp);
+      res.send(result);
+    })
 
     app.get("/popularData", async (req, res) => {
         const cursor = popularDataCollection.find();
