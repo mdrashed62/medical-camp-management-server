@@ -3,7 +3,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require('mongodb');
 require("dotenv").config();
 const app = express();
-const port = process.env.PORT || 5000;
+const port = /* process.env.PORT || */ 5000;
 
 //middleware
 app.use(cors());
@@ -29,19 +29,30 @@ async function run() {
 
     const popularDataCollection = client.db('MediCampManagement').collection('popularData');
     const registeredCampsCollection = client.db('MediCampManagement').collection('registeredCamps');
+    const userCampsCollection = client.db('MediCampManagement').collection('users');
 
-    // get and post for registered camps
-
-    app.get("/registeredCamps", async(req, res) => {
-      const cursor = registeredCampsCollection.find();
-      const result = cursor.toArray();
+    // users related api
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const result = await userCampsCollection.insertOne(user);
       res.send(result);
     })
+    
 
+
+    // get and post for registered camps
     app.post("/registeredCamps", async (req, res) => {
       const registeredCamp = req.body;
       const result = await registeredCampsCollection.insertOne(registeredCamp);
       res.send(result);
+    })
+
+    app.get("/registeredCamps", async(req, res) => {
+      const cursor = registeredCampsCollection.find();
+      console.log(cursor);
+      const result = await cursor.toArray();
+      res.send(result);
+      console.log(result);
     })
 
     app.get("/popularData", async (req, res) => {
