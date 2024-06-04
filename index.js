@@ -49,19 +49,22 @@ async function run() {
     })
 
     // update addedCamps
-    app.put("/services/:id", async (req, res) => {
+    app.put("/addedCamps/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updatedCamps = req.body;
       const services = {
         $set: {
-          price: updatedCamps.price,
-          imgURL: updatedCamps.imgURL,
-          serviceName: updatedCamps.serviceName,
-          providerImage: updatedCamps.providerImage,
-          providerName: updatedCamps.providerName,
+          campName: updatedCamps.campName,
+          location: updatedCamps.location,
+          image: updatedCamps.image,
+          campFees: updatedCamps.campFees,
+          dateTime: updatedCamps.dateTime,
           description: updatedCamps.description,
+          healthcareProfessionalName: updatedCamps.healthcareProfessionalName,
+          participantCount: updatedCamps.participantCount,
+
         },
       };
       const result = await addCampsCollection.updateOne(
