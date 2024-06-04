@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require("dotenv").config();
 const app = express();
 const port = /* process.env.PORT || */ 5000;
@@ -31,6 +31,46 @@ async function run() {
     const registeredCampsCollection = client.db('MediCampManagement').collection('registeredCamps');
     const userCampsCollection = client.db('MediCampManagement').collection('users');
     const addCampsCollection = client.db('MediCampManagement').collection('addedCamps');
+
+    // Delete and update
+    app.delete("/addedCamps/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await addCampsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // get for update
+    app.get("/addedCamps/:id", async(req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await addCampsCollection.findOne(query);
+      res.send(result);
+    })
+
+    // update addedCamps
+    app.put("/services/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedCamps = req.body;
+      const services = {
+        $set: {
+          price: updatedCamps.price,
+          imgURL: updatedCamps.imgURL,
+          serviceName: updatedCamps.serviceName,
+          providerImage: updatedCamps.providerImage,
+          providerName: updatedCamps.providerName,
+          description: updatedCamps.description,
+        },
+      };
+      const result = await addCampsCollection.updateOne(
+        filter,
+        services,
+        options
+      );
+      res.send(result);
+    });
 
     // addedCamps post and get
     app.get("/addedCamps", async(req, res) => {
