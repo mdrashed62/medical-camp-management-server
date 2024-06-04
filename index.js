@@ -30,10 +30,32 @@ async function run() {
     const popularDataCollection = client.db('MediCampManagement').collection('popularData');
     const registeredCampsCollection = client.db('MediCampManagement').collection('registeredCamps');
     const userCampsCollection = client.db('MediCampManagement').collection('users');
+    const addCampsCollection = client.db('MediCampManagement').collection('addedCamps');
+
+    // addedCamps post and get
+    app.get("/addedCamps", async(req, res) => {
+      const cursor = addCampsCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+
+    app.post("/addedCamps", async (req, res) => {
+      const addedCamps = req.body;
+      const result = await addCampsCollection.insertOne(addedCamps);
+      res.send(result);
+    })
 
     // users related api
     app.post('/users', async (req, res) => {
       const user = req.body;
+      // insert email if user doesn't exists: 
+      // you can do this many ways (1. email unique, 2. upsert, 3. simple checking);
+      const query = {email: user.email};
+      const existingUser = await userCampsCollection.findOne(query);
+      if(existingUser){
+        return res.send({message: 'user already exists', insertedId: null})
+      }
       const result = await userCampsCollection.insertOne(user);
       res.send(result);
     })
@@ -49,10 +71,8 @@ async function run() {
 
     app.get("/registeredCamps", async(req, res) => {
       const cursor = registeredCampsCollection.find();
-      console.log(cursor);
       const result = await cursor.toArray();
       res.send(result);
-      console.log(result);
     })
 
     app.get("/popularData", async (req, res) => {
