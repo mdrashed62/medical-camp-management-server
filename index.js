@@ -7,7 +7,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5174'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lic5ni0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -27,16 +32,11 @@ async function run() {
     const userCampsCollection = client.db('MediCampManagement').collection('users');
     const addCampsCollection = client.db('MediCampManagement').collection('addedCamps');
 
-    app.post('/jwt', async (req, res) => {
-      const user = req.body;
-      try {
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-        res.send({ token });
-      } catch (error) {
-        console.error("JWT generation error:", error);
-        res.status(500).send({ error: 'Failed to generate token' });
-      }
-    });
+    // app.post('/jwt', async (req, res) => {
+    //   const user = req.body;
+    //   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+    //   res.send({ token });
+    // });
 
     // Delete and update
     app.delete("/addedCamps/:id", async (req, res) => {
