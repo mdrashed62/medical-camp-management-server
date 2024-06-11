@@ -3,16 +3,17 @@ const cors = require("cors");
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({
-  origin: [
-    'http://localhost:5174'
-  ],
-  credentials: true
-}));
+// app.use(cors({
+//   origin: [
+//     'http://localhost:5174'
+//   ],
+// }));
+app.use(cors())
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lic5ni0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -31,6 +32,12 @@ async function run() {
     const registeredCampsCollection = client.db('MediCampManagement').collection('registeredCamps');
     const userCampsCollection = client.db('MediCampManagement').collection('users');
     const addCampsCollection = client.db('MediCampManagement').collection('addedCamps');
+
+    // pagination
+    app.get('/addedCampsCount', async(req, res) => {
+      const count = await addCampsCollection.estimatedDocumentCount();
+      res.send({count});
+    })
 
     // app.post('/jwt', async (req, res) => {
     //   const user = req.body;
