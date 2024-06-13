@@ -2,18 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 require("dotenv").config();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-// app.use(cors({
-//   origin: [
-//     'http://localhost:5174'
-//   ],
-// }));
-app.use(cors())
+
+app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lic5ni0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -127,11 +123,35 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/registeredCamps/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await registeredCampsCollection.findOne(query);
+      res.send(result)
+    });
+
     app.get("/popularData", async (req, res) => {
-      const cursor = popularDataCollection.find();
-      const result = await cursor.toArray();
+      const result = await popularDataCollection.find().toArray();
       res.send(result);
     });
+
+    // payment intent 
+    app.post('/create-payment-intent', async (req, res) => {
+      const {fees} = req.body.fees;
+      const feesInCent = parseFloat(fees) * 100;
+
+      if(!fees || feesInCent < 1 ) return
+
+      const {client_secret} = await stripe.paymentIntents.create({
+        amount: feesInCent,
+        currency: 'usd',
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      })
+
+      res.send({clientSecret: client_secret})
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
