@@ -1,9 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -34,12 +33,6 @@ async function run() {
       const count = await addCampsCollection.estimatedDocumentCount();
       res.send({count});
     })
-
-    // app.post('/jwt', async (req, res) => {
-    //   const user = req.body;
-    //   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-    //   res.send({ token });
-    // });
 
     // Delete and update
     app.delete("/addedCamps/:id", async (req, res) => {
@@ -137,20 +130,25 @@ async function run() {
 
     // payment intent 
     app.post('/create-payment-intent', async (req, res) => {
-      const {fees} = req.body.fees;
-      const feesInCent = parseFloat(fees) * 100;
+      const {price} = req.body;
+      console.log(price, 'fees')
+      const amount = parseInt(price * 100);
 
-      if(!fees || feesInCent < 1 ) return
+      console.log(amount, "amount inside the intent")
 
-      const {client_secret} = await stripe.paymentIntents.create({
-        amount: feesInCent,
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
         currency: 'usd',
-        automatic_payment_methods: {
-          enabled: true,
-        },
-      })
+        payment_method_types: ['card']
+      });
 
-      res.send({clientSecret: client_secret})
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+
+    app.post('/payments', async (req, res) => {
+      const payment = req.body;
     })
 
     await client.db("admin").command({ ping: 1 });
