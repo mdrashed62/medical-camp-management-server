@@ -27,12 +27,13 @@ async function run() {
     const registeredCampsCollection = client.db('MediCampManagement').collection('registeredCamps');
     const userCampsCollection = client.db('MediCampManagement').collection('users');
     const addCampsCollection = client.db('MediCampManagement').collection('addedCamps');
+    const paymentsCollection = client.db('MediCampManagement').collection('payments');
 
     // pagination
     app.get('/addedCampsCount', async(req, res) => {
       const count = await addCampsCollection.estimatedDocumentCount();
       res.send({count});
-    })
+    });
 
     // Delete and update
     app.delete("/addedCamps/:id", async (req, res) => {
@@ -123,6 +124,30 @@ async function run() {
       res.send(result)
     });
 
+    app.get("/registeredCamps/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { participantEmail: email };
+      const result = await registeredCampsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Update confirmation status
+    app.patch("/confirmRegistration/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await registeredCampsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { confirmationStatus: "Confirmed" } }
+      );
+      res.send(result);
+    });
+
+    // Delete registration
+    app.delete("/cancelRegistration/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await registeredCampsCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
     app.get("/popularData", async (req, res) => {
       const result = await popularDataCollection.find().toArray();
       res.send(result);
@@ -145,11 +170,32 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret
       })
-    })
+    });
 
     app.post('/payments', async (req, res) => {
       const payment = req.body;
-    })
+      const paymentResult = await paymentsCollection.insertOne(payment);
+      console.log('payment info', payment)
+
+      //carefully delete each item from the cart
+      res.send(paymentResult)
+    });
+
+    app.get("/payments/:email", async (req, res) => {
+      const query = {email: req.params.email}
+      const result = await paymentsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.put('/update-payment-status/:campId', async (req, res) => {
+      const { campId } = req.params;
+      const result = await registeredCampsCollection.updateOne(
+        { _id: new ObjectId(campId) },
+        { $set: { paymentStatus: 'Paid' } }
+      );
+      res.send(result);
+    });
+    
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
