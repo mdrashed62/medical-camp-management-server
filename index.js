@@ -28,6 +28,15 @@ async function run() {
     const userCampsCollection = client.db('MediCampManagement').collection('users');
     const addCampsCollection = client.db('MediCampManagement').collection('addedCamps');
     const paymentsCollection = client.db('MediCampManagement').collection('payments');
+    const feedbackCollection = client.db('MediCampManagement').collection('feedbackCollection');
+
+    //feedback 
+    app.post('/feedback', async (req, res) => {
+      const feedback = req.body;
+      const result = await feedbackCollection.insertOne(feedback);
+      res.send(result);
+    });
+    
 
     // pagination
     app.get('/addedCampsCount', async(req, res) => {
@@ -35,6 +44,11 @@ async function run() {
       res.send({count});
     });
 
+    app.get('/registeredCampsCount', async(req, res) => {
+      const count = await registeredCampsCollection.estimatedDocumentCount();
+      res.send({count});
+    });
+    
     // Delete and update
     app.delete("/addedCamps/:id", async (req, res) => {
       const id = req.params.id;
@@ -130,6 +144,21 @@ async function run() {
       const result = await registeredCampsCollection.find(query).toArray();
       res.send(result);
     });
+
+    app.delete("/registeredCamps/:id", async (req, res) => {
+      const id = req.params.id;
+      try {
+        const result = await registeredCampsCollection.deleteOne({ _id: new ObjectId(id) });
+        if (result.deletedCount === 1) {
+          res.send({ message: "Camp deleted successfully", deletedCount: result.deletedCount });
+        } else {
+          res.status(404).send({ message: "Camp not found" });
+        }
+      } catch (error) {
+        res.status(500).send({ message: "Error deleting camp", error });
+      }
+    });
+    
 
     // Update confirmation status
     app.patch("/confirmRegistration/:id", async (req, res) => {
