@@ -36,6 +36,12 @@ async function run() {
       const result = await feedbackCollection.insertOne(feedback);
       res.send(result);
     });
+
+    app.get("/feedback", async (req, res) => {
+      const cursor = feedbackCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
     
 
     // pagination
@@ -48,14 +54,50 @@ async function run() {
       const count = await registeredCampsCollection.estimatedDocumentCount();
       res.send({count});
     });
+
+    app.get("/payments/:email", async (req, res) => {
+      const email = req.params.email;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
+    
+      const query = { email: email };
+      
+      try {
+        const totalPayments = await paymentsCollection.countDocuments(query);
+        const payments = await paymentsCollection.find(query).skip(skip).limit(limit).toArray();
+    
+        res.send({
+          totalPayments,
+          currentPage: page,
+          totalPages: Math.ceil(totalPayments / limit),
+          payments
+        });
+      } catch (err) {
+        res.status(500).send({ message: "Error fetching payments", error: err });
+      }
+    });
+    
     
     // Delete and update
-    app.delete("/addedCamps/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await addCampsCollection.deleteOne(query);
-      res.send(result);
-    });
+ // Delete a camp by its ID
+app.delete("/addedCamps/:id", async (req, res) => {
+  const id = req.params.id; 
+  const query = { _id: new ObjectId(id) }; 
+  try {
+    const result = await addCampsCollection.deleteOne(query);
+    if (result.deletedCount > 0) {
+      res.send({ deletedCount: result.deletedCount });
+    } else {
+      res.status(404).send({ message: "Camp not found" });
+    }
+  } catch (error) {
+    console.error("Error deleting camp:", error);
+    res.status(500).send({ message: "Failed to delete camp", error });
+  }
+});
+
+
 
     // Get for update
     app.get("/addedCamps/:id", async (req, res) => {
@@ -65,40 +107,63 @@ async function run() {
       res.send(result);
     });
 
+   
     // Update addedCamps
-    app.put("/addedCamps/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const options = { upsert: true };
-      const updatedCamps = req.body;
-      const services = {
-        $set: {
-          campName: updatedCamps.campName,
-          location: updatedCamps.location,
-          image: updatedCamps.image,
-          campFees: updatedCamps.campFees,
-          dateTime: updatedCamps.dateTime,
-          description: updatedCamps.description,
-          healthcareProfessionalName: updatedCamps.healthcareProfessionalName,
-          participantCount: updatedCamps.participantCount,
-        },
-      };
-      const result = await addCampsCollection.updateOne(filter, services, options);
-      res.send(result);
-    });
+app.put("/addedCamps/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+  const options = { upsert: true };
+  const updatedCamps = req.body;
+  const services = {
+    $set: {
+      campName: updatedCamps.campName,
+      location: updatedCamps.location,
+      image: updatedCamps.image,
+      campFees: updatedCamps.campFees,
+      dateTime: updatedCamps.dateTime,
+      description: updatedCamps.description,
+      healthcareProfessionalName: updatedCamps.healthcareProfessionalName,
+      participantCount: updatedCamps.participantCount,
+    },
+  };
+  try {
+    const result = await addCampsCollection.updateOne(filter, services, options);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating camp", error });
+  }
+});
+
 
     // addedCamps post and get
-    app.get("/addedCamps", async (req, res) => {
-      const cursor = addCampsCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
-    });
-
     app.post("/addedCamps", async (req, res) => {
       const addedCamps = req.body;
       const result = await addCampsCollection.insertOne(addedCamps);
       res.send(result);
     });
+
+    app.get("/addedCamps", async (req, res) => {
+      const result = await addCampsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/addedCamps", async (req, res) => {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
+    
+      const totalCamps = await addCampsCollection.countDocuments();
+      const camps = await addCampsCollection.find().skip(skip).limit(limit).toArray();
+    
+      res.send({
+        totalCamps,
+        currentPage: page,
+        totalPages: Math.ceil(totalCamps / limit),
+        camps,
+      });
+    });
+
+    
 
     // Users related API
     app.post('/users', async (req, res) => {
@@ -126,10 +191,21 @@ async function run() {
     });
 
     app.get("/registeredCamps", async (req, res) => {
-      const cursor = registeredCampsCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
+    
+      const totalCamps = await registeredCampsCollection.countDocuments();
+      const camps = await registeredCampsCollection.find().skip(skip).limit(limit).toArray();
+    
+      res.send({
+        totalCamps,
+        currentPage: page,
+        totalPages: Math.ceil(totalCamps / limit),
+        camps
+      });
     });
+    
 
     app.get("/registeredCamps/:id", async (req, res) => {
       const id = req.params.id;
