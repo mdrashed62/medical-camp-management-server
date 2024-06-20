@@ -8,7 +8,15 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://medical-camp-management-server-a12.vercel.app",
+      "https://medical-camp-management-ada50.web.app",
+    ]
+  })
+);
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lic5ni0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -302,8 +310,8 @@ app.put("/addedCamps/:id", async (req, res) => {
     });
     
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
